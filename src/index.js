@@ -12,16 +12,6 @@ if (!global._babelPolyfill) // https://github.com/s-panferov/awesome-typescript-
 //
 // ... will print 'undefined' without the the babel-polyfill being required.
 
-import {Point, between, foo} from './point.js';
-
-exports.Point   = Point;
-exports.between = between;
-exports.foo     = foo;
-
-import type {DemonstrateUseOfExportedTypes} from './point.js';
-
-export type {DemonstrateUseOfExportedTypes};
-
 import {Node} from './trees.js';
 
 exports.Node = Node;

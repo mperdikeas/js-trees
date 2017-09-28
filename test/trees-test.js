@@ -7,8 +7,9 @@ import AssertionError    from 'assertion-error';
 assert.isOk(AssertionError);
 import           _ from 'lodash';
 assert.isOk(_);
-import {Node} from '../lib/index.js';
+import {Node} from '../src/index.js';
 assert.isOk(Node);
+import type {F} from '../src/trees.js';
 
 
 describe('Node', function() {
@@ -21,16 +22,13 @@ describe('Node', function() {
     });
     describe('set', function() {
         it('should work', function() {
-            const node= new Node(3);
+            const node: Node<number, string>= new Node(3);
             assert.isTrue(node.isLeaf());
-            assert.isTrue(node.set('a', 4)===undefined);
+            const nodeToAdd = new Node(4);
+            assert.isTrue(node.set('a', nodeToAdd)===undefined);
             assert.isTrue(!node.isLeaf());            
-            assert.isTrue(node.set('a', 5)===4);
+            assert.isTrue(node.set('a', new Node(5))===nodeToAdd);
             assert.isTrue(!node.isLeaf());                        
-            assert.isTrue(node.set(4, 'delta')===undefined);
-            assert.isTrue(!node.isLeaf());                        
-            assert.isTrue(node.set(4, 'epislon')==='delta');
-            assert.isTrue(!node.isLeaf());
         });
     });
 
@@ -129,24 +127,82 @@ node #0 ~~[1]~~> node #2 with value: i
 
     describe('depthFirstTraversal', function() {
         it('seems correct', function() {
-            let {root,a,b,c,d,e,f,g,h,i,j} = sampleTree2(false);
+            let root: Node<number, number> = sampleTree2(false);
             let sum = 0;
-            function accum(n: Node<number>) {
+            function accum(n: Node<number, number>) {
                 sum+=n.value;
             }
-            root.depthFirstTraversal(accum, true);
-            assert.strictEqual(45, sum);
-            sum = 0;
-            root.depthFirstTraversal(accum, false);
-            assert.strictEqual(44, sum);
+            {
+                sum = 0;            
+                root.depthFirstTraversal(accum, true, true);
+                assert.strictEqual(45, sum);
+            }
+            {
+                sum = 0;
+                root.depthFirstTraversal(accum, false, false);
+                assert.strictEqual(44, sum);
+            }
             // cycle detection
             assert.throws( ()=>
                            {
-                let {root,a,b,c,d,e,f,g,h,i,j} = sampleTree2(true);
-                root.depthFirstTraversal((x)=>{}, true);
+                               let root = sampleTree2(true);
+                               root.depthFirstTraversal((x)=>{}, true, true);
                            }, AssertionError);
  
         });
+    });
+
+    describe('depthFirstTraversal visits nodes in correct order', function() {
+        it('seems correct', function() {
+            let {root,a,b,c,d,e,f,g,h,i,j} = sampleTree1(false);
+            let visited = '';
+            function visitor(n: Node<string, number>) {
+                visited+=n.value;
+            }
+            (visitor: F<string, number>); // see: https://stackoverflow.com/q/41212389/274677
+            {
+                visited = '';
+                root.depthFirstTraversal(visitor, true, true);
+                assert.strictEqual(visited, 'abdefhigc');
+            }
+            {
+                visited = '';
+                root.depthFirstTraversal(visitor, false, true);
+                assert.strictEqual(visited, 'bdefhigc');
+            }
+            {
+                visited = '';
+                root.depthFirstTraversal(visitor, true, false);
+                assert.strictEqual(visited, 'dhifgebca');
+            }
+            {
+                visited = '';
+                root.depthFirstTraversal(visitor, false, false);
+                assert.strictEqual(visited, 'dhifgebc');
+            }
+         });
+    });
+
+    describe('depthFirstTraversal birth edges are correct', function() {
+        it('seems correct', function() {
+            let root: Node<string, string> = sampleTree3(false);
+            let edgesTraversed = '';
+            const visitor: F<string, string> =  // alternate way of: https://stackoverflow.com/q/41212389/274677
+            function visitor(n: Node<string, string>, parent: ?Node<string, string>, edge: ?string): void {
+                if (edge!=null)
+                    edgesTraversed+=edge;
+            }
+            {
+                edgesTraversed = '';
+                root.depthFirstTraversal(visitor, true, true);
+                assert.strictEqual(edgesTraversed, 'bdefhigc');
+            }
+            {
+                edgesTraversed = '';
+                root.depthFirstTraversal(visitor, true, false);
+                assert.strictEqual(edgesTraversed, 'dhifgebc');
+            }            
+         });
     });
 
     
@@ -173,10 +229,32 @@ function sampleTree1() {
     a.setn(1, c);
     // j is not connected to the rest of the tree
     return {root: a, a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, j: j};
+    /*
+          a
+        b          c
+    d      e
+         f   g
+        h i
+
+    */
 }
 
-function sampleTree2(withCycle: boolean) {
-    const a = new Node(1);
+
+
+class Holder<V> {
+    value: V;
+    constructor(value:V) {
+        this.value = value;
+    }
+}
+
+function foo() : Holder<number> {
+    const returnValue: Holder<number> = new Holder(42, '42');
+    return returnValue;
+}
+
+function sampleTree2(withCycle: boolean) : Node<number, number>{
+    const a: Node<number, number> = new Node(1);
     const b = new Node(2);
     const c = new Node(3);
     const d = new Node(4);
@@ -185,7 +263,6 @@ function sampleTree2(withCycle: boolean) {
     const g = new Node(7);
     const h = new Node(8);
     const i = new Node(9);
-    const j = new Node(10);
     f.setn(0, h);
     f.setn(1, i);
     e.setn(0, f);
@@ -196,7 +273,34 @@ function sampleTree2(withCycle: boolean) {
     a.setn(1, c);
     if (withCycle)
         h.setn(0,a);
-    // j is not connected to the rest of the tree    
-    return {root: a, a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, j: j};
+    return a;
 }
 
+function sampleTree3(): Node<string, string> {
+    const a: Node<string, string> = new Node('a');
+    const b = new Node('b');
+    const c = new Node('c');
+    const d = new Node('d');
+    const e = new Node('e');
+    const f = new Node('f');
+    const g = new Node('g');
+    const h = new Node('h');
+    const i = new Node('i');
+    f.setn('h', h);
+    f.setn('i', i);
+    e.setn('f', f);
+    e.setn('g', g);
+    b.setn('d', d);
+    b.setn('e', e);
+    a.setn('b', b);
+    a.setn('c', c);
+    return a;
+    /*
+          a
+        b          c
+    d      e
+         f   g
+        h i
+
+    */
+}

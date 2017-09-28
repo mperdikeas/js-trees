@@ -17,12 +17,24 @@ if (!global._babelPolyfill) // https://github.com/s-panferov/awesome-typescript-
 import _ from 'lodash';
 import {assert} from 'chai';
 
-type F<V,E> = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E)=> void;
+export type F<V,E> = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E)=> void;
 type FV<V,E> = (n: Node<V, E>)=> boolean;
 type ValuePrinter<V> = (v: V)=>string;
 
 
 const TREE_NODE_ID_SYMBOL_KEY: string = 'mjb44-NODE-id';
+
+class Holder<V> {
+    value: V;
+    constructor(value:V) {
+        this.value = value;
+    }
+}
+
+function foo() : Holder<number> {
+    const returnValue: Holder<number> = new Holder(42);
+    return returnValue;
+}
 
 class Node<V, E> {
     value: V;
@@ -66,23 +78,30 @@ class Node<V, E> {
         return this.children === null;
     }
 
-    depthFirstTraversal(f: F<V,E>, _visitStartNode: ?boolean): void {
-        const visitStartNode: boolean = _visitStartNode == null ? true : _visitStartNode;
+    depthFirstTraversal(f: F<V,E>, visitStartNode: boolean, visitParentFirstThenChildren: boolean): void {
         const cycleDetector: Array<Node<V,E>> = [];
-        function _visit(n: Node<V,E>, parentN: ?Node<V,E>, birthEdge: ?E, firstVisit: boolean) {
+        const that = this;
+        function _visit(n: Node<V,E>, parentN: ?Node<V,E>, birthEdge: ?E) {
             assert.isTrue(!cycleDetector.includes(n), 'cycle detected');
             cycleDetector.push(n);
-            if (!(firstVisit && !visitStartNode)) {
-                f(n, parentN, birthEdge);
+            if (visitParentFirstThenChildren) {
+                if ((n!==that) || visitStartNode) {
+                    f(n, parentN, birthEdge);
+                }
             }
             const children: ?Map<E, Node<V,E>> = n.children;
             if (children != null) {
                 children.forEach( (v: Node<V,E>, k: E) => {
-                    _visit(v, n, k, false);
+                    _visit(v, n, k);
                 });
             }
+            if (!visitParentFirstThenChildren) {
+                if ((n!==that) || visitStartNode) {
+                    f(n, parentN, birthEdge);
+                }
+            }
         }
-        _visit(this, null, null, true);        
+        _visit(this, null, null);        
     }
 
     descendants(_includingThisNode: ?boolean): Array<Node<V, E>> {
@@ -92,7 +111,7 @@ class Node<V, E> {
             descendants.push(n);
         }
 
-        this.depthFirstTraversal(f, includingThisNode);
+        this.depthFirstTraversal(f, includingThisNode, true);
         assert.isTrue(   ((!includingThisNode) && (descendants.length===0) && ( this.isLeaf())) ||
                          ((!includingThisNode) && (descendants.length>  0) && (!this.isLeaf())) ||
                          (( includingThisNode) && (descendants.length>  0)) );
@@ -106,7 +125,7 @@ class Node<V, E> {
             if (n.isLeaf())
                 rv.push(n);
         }
-        this.depthFirstTraversal(addLeavesOnly, includingThisNode);
+        this.depthFirstTraversal(addLeavesOnly, includingThisNode, true);
         return rv;
     }
 
@@ -154,7 +173,7 @@ class Node<V, E> {
                 } else throw new Error('bug');
             }
         };
-        this.depthFirstTraversal(printerVisitor);
+        this.depthFirstTraversal(printerVisitor, true, true);
         return lines.join('\n');
     }
 }
