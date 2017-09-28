@@ -9,7 +9,8 @@ import           _ from 'lodash';
 assert.isOk(_);
 import {Node} from '../src/index.js';
 assert.isOk(Node);
-import type {F} from '../src/trees.js';
+import type {F}  from '../src/trees.js';
+import type {F2} from '../src/trees.js';
 
 
 describe('Node', function() {
@@ -205,6 +206,36 @@ node #0 ~~[1]~~> node #2 with value: i
          });
     });
 
+    describe('traverseAncestors', function() {
+        const {root,a,b,c,d,e,f,g,h,i,j} = sampleTree1();
+        (root: Node<string, number>);
+        let ancestors = '';
+        let children  = '';
+        let childEdges= [];
+        let distances = [];
+        let isRoots   = [];
+        function visitor(parent: Node<string, number>, child: ?Node<string, number>, childEdge: ?number, distanceFromStart: number, isRoot: boolean) {
+            ancestors+=parent.value;
+            if (child!=null)
+                children+=child.value;
+            if (childEdge!=null)
+                childEdges.push(childEdge);
+            distances.push(distanceFromStart);
+            isRoots.push(isRoot);
+        }
+        (visitor: F2<string, number>);        
+        it('should work', function() {
+            ancestors = '';
+            root.traverseAncestors(visitor);
+            assert.strictEqual(ancestors, 'a');
+            assert.strictEqual(children , '');
+            assert.deepEqual(childEdges, []);
+            assert.deepEqual(distances, [0]);
+            assert.deepEqual(isRoots, [true]);            
+        });
+
+        I am left here to write more test cases for the traverse ancestors
+    });    
     
 }); //  Node
 
@@ -240,18 +271,6 @@ function sampleTree1() {
 }
 
 
-
-class Holder<V> {
-    value: V;
-    constructor(value:V) {
-        this.value = value;
-    }
-}
-
-function foo() : Holder<number> {
-    const returnValue: Holder<number> = new Holder(42, '42');
-    return returnValue;
-}
 
 function sampleTree2(withCycle: boolean) : Node<number, number>{
     const a: Node<number, number> = new Node(1);

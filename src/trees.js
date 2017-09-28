@@ -17,34 +17,29 @@ if (!global._babelPolyfill) // https://github.com/s-panferov/awesome-typescript-
 import _ from 'lodash';
 import {assert} from 'chai';
 
-export type F<V,E> = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E)=> void;
+export type F<V,E>  = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E)=> void;
+export type F2<V,E> = (n: Node<V, E>, childN : ?Node<V, E>, childEdge: ?E, distanceFromStart: number, isRoot: boolean)=> void;
 type FV<V,E> = (n: Node<V, E>)=> boolean;
 type ValuePrinter<V> = (v: V)=>string;
 
 
 const TREE_NODE_ID_SYMBOL_KEY: string = 'mjb44-NODE-id';
 
-class Holder<V> {
-    value: V;
-    constructor(value:V) {
-        this.value = value;
-    }
-}
-
-function foo() : Holder<number> {
-    const returnValue: Holder<number> = new Holder(42);
-    return returnValue;
-}
 
 class Node<V, E> {
     value: V;
+    parent: ?Node<V, E>;
     children: ?Map<E, Node<V,E>>;
 
     constructor(value: V) {
         this.value = value;
         this.children = null;
+        this.parent = null;
     }
 
+    setParent(n: Node<V, E>): void {
+        this.parent = n;
+    }
 
     allChildrenSatisfy(f: FV<V,E>): boolean {
         let rv: boolean = true;
@@ -65,6 +60,7 @@ class Node<V, E> {
         if (children!=null) {
             const prevValue: ?Node<V, E> = children.get(edge);
             children.set(edge, node);
+            node.setParent(this);
             return prevValue;
         } else throw new Error('bug1');
     }
@@ -103,6 +99,25 @@ class Node<V, E> {
         }
         _visit(this, null, null);        
     }
+
+    traverseAncestors(f: F2<V, E>): void {
+        let distance = 0;
+        let node: Node<V, E> = this;
+        let child: ?Node<V, E> = null;
+        let edge: ?E = null;
+        while (true) {
+            f(node, child, edge, distance, this.parent===null);
+            if (node.parent!=null) {
+                const savedParent: Node<V, E> = node.parent;
+                child = node;
+                edge = node.parent.edgeThatLeadsTo(node);
+                node = savedParent;
+                distance++;
+            } else
+                break;
+        }
+    }
+
 
     descendants(_includingThisNode: ?boolean): Array<Node<V, E>> {
         const includingThisNode: boolean = _includingThisNode == null ? false : _includingThisNode;
