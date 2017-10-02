@@ -214,6 +214,13 @@ node #0 ~~[1]~~> node #2 with value: i
         let childEdges= [];
         let distances = [];
         let isRoots   = [];
+        function clearTestVariables() {
+            ancestors  = '';
+            children   = '';
+            childEdges = [];
+            distances  = [];
+            isRoots    = [];
+        }
         function visitor(parent: Node<string, number>, child: ?Node<string, number>, childEdge: ?number, distanceFromStart: number, isRoot: boolean) {
             ancestors+=parent.value;
             if (child!=null)
@@ -225,18 +232,85 @@ node #0 ~~[1]~~> node #2 with value: i
         }
         (visitor: F2<string, number>);        
         it('should work', function() {
-            ancestors = '';
+            clearTestVariables();
             root.traverseAncestors(visitor);
             assert.strictEqual(ancestors, 'a');
             assert.strictEqual(children , '');
             assert.deepEqual(childEdges, []);
             assert.deepEqual(distances, [0]);
-            assert.deepEqual(isRoots, [true]);            
+            assert.deepEqual(isRoots, [true]);
         });
+        it('should work #2', function() {
+            clearTestVariables();
+            a.traverseAncestors(visitor);
+            assert.strictEqual(ancestors, 'a');
+            assert.strictEqual(children , '');
+            assert.deepEqual(childEdges, []);
+            assert.deepEqual(distances, [0]);
+            assert.deepEqual(isRoots, [true]);
+        });
+        it('should work #3', function() {
+            clearTestVariables();
+            b.traverseAncestors(visitor);
+            assert.strictEqual(ancestors, 'ba');
+            assert.strictEqual(children , 'b');
+            assert.deepEqual(childEdges, [0]);
+            assert.deepEqual(distances, [0,1]);
+            assert.deepEqual(isRoots, [false, true]);
+        });
+        it('should work #4', function() {
+            clearTestVariables();
+            c.traverseAncestors(visitor);
+            assert.strictEqual(ancestors, 'ca');
+            assert.strictEqual(children , 'c');
+            assert.deepEqual(childEdges, [1]);
+            assert.deepEqual(distances, [0,1]);
+            assert.deepEqual(isRoots, [false, true]);
+        });
+        it('should work #5', function() {
+            clearTestVariables();
+            i.traverseAncestors(visitor);
+            assert.strictEqual(ancestors, 'ifeba');
+            assert.strictEqual(children , 'ifeb');
+            assert.deepEqual(childEdges, [1,0,1,0]);
+            assert.deepEqual(distances, [0,1,2,3,4]);
+            assert.deepEqual(isRoots, [false, false, false, false, true]);
+        });
+    });
 
-        I am left here to write more test cases for the traverse ancestors
+    describe('leaves', function() {
+        const {root,a,b,c,d,e,f,g,h,i,j} = sampleTree1();
+        (root: Node<string, number>);
+        let leaves = [];
+        function clearTestVariables() {
+            leaves = [];
+        }
+        it('should work', function() {
+            clearTestVariables();
+            leaves = h.leaves();
+            assert.deepEqual(leaves, [h]);
+        });
+        it('should work #2', function() {
+            clearTestVariables();
+            leaves = i.leaves();
+            assert.deepEqual(leaves, [i]);
+        });
+        it('should work #3', function() {
+            clearTestVariables();
+            leaves = f.leaves();
+            assert.deepEqual(leaves, [h, i]);
+        });
+        it('should work #4', function() {
+            clearTestVariables();
+            leaves = b.leaves();
+            assert.deepEqual(leaves, [d, h, i, g]);
+        });
+        it('should work #5', function() {
+            clearTestVariables();
+            leaves = root.leaves();
+            assert.deepEqual(leaves, [d, h, i, g, c]);
+        });        
     });    
-    
 }); //  Node
 
 function sampleTree1() {

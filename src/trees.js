@@ -100,13 +100,26 @@ class Node<V, E> {
         _visit(this, null, null);        
     }
 
+    // TODO: I am left to implement a method that yields all the leaves of the tree (this will be necessary
+    // for when I implement the min-max algorithm) but before I do that
+    // I need to experiment with typing Generators and Iterators in flow
+
+    leaves(): Array<Node<V, E>> {
+        const rv : Array<Node<V, E>> = [];
+        this.depthFirstTraversal(function addIfLeaf(n: Node<V, E>) {
+            if (n.children===null)
+                rv.push(n);
+        }, true, false);
+        return rv;
+    }
+
     traverseAncestors(f: F2<V, E>): void {
         let distance = 0;
         let node: Node<V, E> = this;
         let child: ?Node<V, E> = null;
         let edge: ?E = null;
         while (true) {
-            f(node, child, edge, distance, this.parent===null);
+            f(node, child, edge, distance, node.parent===null);
             if (node.parent!=null) {
                 const savedParent: Node<V, E> = node.parent;
                 child = node;
