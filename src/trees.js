@@ -17,7 +17,7 @@ if (!global._babelPolyfill) // https://github.com/s-panferov/awesome-typescript-
 import _ from 'lodash';
 import {assert} from 'chai';
 
-export type F<V,E>  = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E)=> void;
+export type F<V,E>  = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E, depth: number)=> void;
 export type F2<V,E> = (n: Node<V, E>, childN : ?Node<V, E>, childEdge: ?E, distanceFromStart: number, isRoot: boolean)=> void;
 type FV<V,E> = (n: Node<V, E>)=> boolean;
 type ValuePrinter<V> = (v: V)=>string;
@@ -51,7 +51,12 @@ class Node<V, E> {
             return rv;
         } else throw new Error('bad choreography');
     }
-
+    /* Iteration of children during traversal is automatically done based on insertion
+       order (https://stackoverflow.com/a/31159284/274677).
+       This is exactly the behavior I want if the trees are to be used in an alpha-beta pruning
+       algorithm, in which case I may want to place the children in such an order as to increase
+       the likelihood of pruning incidents.
+    */
     set(edge: E, node: Node<V,E>): ?Node<V,E> {
         if (this.children === null) {
             this.children = new Map();
@@ -77,27 +82,27 @@ class Node<V, E> {
     depthFirstTraversal(f: F<V,E>, visitStartNode: boolean, visitParentFirstThenChildren: boolean): void {
         const cycleDetector: Array<Node<V,E>> = [];
         const that = this;
-        function _visit(n: Node<V,E>, parentN: ?Node<V,E>, birthEdge: ?E) {
+        function _visit(n: Node<V,E>, parentN: ?Node<V,E>, birthEdge: ?E, depth: number) {
             assert.isTrue(!cycleDetector.includes(n), 'cycle detected');
             cycleDetector.push(n);
             if (visitParentFirstThenChildren) {
                 if ((n!==that) || visitStartNode) {
-                    f(n, parentN, birthEdge);
+                    f(n, parentN, birthEdge, depth);
                 }
             }
             const children: ?Map<E, Node<V,E>> = n.children;
             if (children != null) {
                 children.forEach( (v: Node<V,E>, k: E) => {
-                    _visit(v, n, k);
+                    _visit(v, n, k, depth+1);
                 });
             }
             if (!visitParentFirstThenChildren) {
                 if ((n!==that) || visitStartNode) {
-                    f(n, parentN, birthEdge);
+                    f(n, parentN, birthEdge, depth);
                 }
             }
         }
-        _visit(this, null, null);        
+        _visit(this, null, null, 0);
     }
 
     // TODO: I am left to implement a method that yields all the leaves of the tree (this will be necessary

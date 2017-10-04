@@ -129,12 +129,13 @@ node #0 ~~[1]~~> node #2 with value: i
     describe('depthFirstTraversal', function() {
         it('seems correct', function() {
             let root: Node<number, number> = sampleTree2(false);
-            let sum = 0;
+            let sum: number = 0;
             function accum(n: Node<number, number>) {
                 sum+=n.value;
             }
+            (accum: F<number, number>);
             {
-                sum = 0;            
+                sum = 0;
                 root.depthFirstTraversal(accum, true, true);
                 assert.strictEqual(45, sum);
             }
@@ -150,6 +151,24 @@ node #0 ~~[1]~~> node #2 with value: i
                                root.depthFirstTraversal((x)=>{}, true, true);
                            }, AssertionError);
  
+        });
+        it('depths are correct', function() {
+            let root: Node<number, number> = sampleTree2(false);
+            let depths: Array<number> = [];
+            function accum(n: Node<number, number>, parent: ?Node<number, number>, birthEdge: ?number, depth: number) {
+                depths.push(depth);
+            }
+            (accum: F<number, number>);
+            {
+                depths = [];
+                root.depthFirstTraversal(accum, true, true);
+                assert.deepEqual(depths, [0,1,2,2,3,4,4,3,1]);
+            }
+            {
+                depths = [];
+                root.depthFirstTraversal(accum, false, false);
+                assert.deepEqual(depths, [2,4,4,3,3,2,1,1]);
+            }
         });
     });
 
