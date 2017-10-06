@@ -14,6 +14,7 @@ import type {F2} from '../src/trees.js';
 
 
 describe('Node', function() {
+
     describe('constructor', function() {
         it('should work', function() {
             const node = new Node(3);
@@ -56,27 +57,28 @@ describe('Node', function() {
             assert.deepEqual(a.descendants(true).map( (x)=>x.value), ['a', 'b', 'd', 'e', 'f', 'h', 'i', 'g', 'c']);
         });
     });
-    describe('leafs', function() {
+    describe('leaves', function() {
         it('should work', function() {
             const {root,a,b,c,d,e,f,g,h,i,j} = sampleTree1();
-            assert.deepEqual(h.leafs(), []);
-            assert.deepEqual(h.leafs(true), [h]);
-            assert.deepEqual(i.leafs(), []);
-            assert.deepEqual(i.leafs(true), [i]);
-            assert.deepEqual(g.leafs(), []);
-            assert.deepEqual(g.leafs(true), [g]);
-            assert.deepEqual(d.leafs(), []);
-            assert.deepEqual(d.leafs(true), [d]);
-            assert.deepEqual(c.leafs(), []);
-            assert.deepEqual(c.leafs(true), [c]);
-            assert.deepEqual(f.leafs()    .map( (x)=>x.value), ['h', 'i']);
-            assert.deepEqual(f.leafs(true).map( (x)=>x.value), ['h', 'i']);            
-            assert.deepEqual(e.leafs()    .map( (x)=>x.value), ['h', 'i', 'g']);
-            assert.deepEqual(e.leafs(true).map( (x)=>x.value), ['h', 'i', 'g']);
-            assert.deepEqual(b.leafs()    .map( (x)=>x.value), ['d', 'h', 'i', 'g']);
-            assert.deepEqual(b.leafs(true).map( (x)=>x.value), ['d', 'h', 'i', 'g']);            
-            assert.deepEqual(a.leafs()    .map( (x)=>x.value), ['d', 'h', 'i', 'g', 'c']);
-            assert.deepEqual(a.leafs(true).map( (x)=>x.value), ['d', 'h', 'i', 'g', 'c']);
+            assert.deepEqual(h.leaves(), []);
+            assert.deepEqual(h.leaves(true), [h]);
+            assert.deepEqual(h.leaves(false), []);
+            assert.deepEqual(i.leaves(), []);
+            assert.deepEqual(i.leaves(true), [i]);
+            assert.deepEqual(g.leaves(), []);
+            assert.deepEqual(g.leaves(true), [g]);
+            assert.deepEqual(d.leaves(), []);
+            assert.deepEqual(d.leaves(true), [d]);
+            assert.deepEqual(c.leaves(), []);
+            assert.deepEqual(c.leaves(true), [c]);
+            assert.deepEqual(f.leaves()    .map( (x)=>x.value), ['h', 'i']);
+            assert.deepEqual(f.leaves(true).map( (x)=>x.value), ['h', 'i']);            
+            assert.deepEqual(e.leaves()    .map( (x)=>x.value), ['h', 'i', 'g']);
+            assert.deepEqual(e.leaves(true).map( (x)=>x.value), ['h', 'i', 'g']);
+            assert.deepEqual(b.leaves()    .map( (x)=>x.value), ['d', 'h', 'i', 'g']);
+            assert.deepEqual(b.leaves(true).map( (x)=>x.value), ['d', 'h', 'i', 'g']);            
+            assert.deepEqual(a.leaves()    .map( (x)=>x.value), ['d', 'h', 'i', 'g', 'c']);
+            assert.deepEqual(a.leaves(true).map( (x)=>x.value), ['d', 'h', 'i', 'g', 'c']);
         });
     });    
     describe('edgeThatLeadsTo', function() {
@@ -297,7 +299,7 @@ node #0 ~~[1]~~> node #2 with value: i
         });
     });
 
-    describe('leaves', function() {
+    describe('leaves II', function() {
         const {root,a,b,c,d,e,f,g,h,i,j} = sampleTree1();
         (root: Node<string, number>);
         let leaves = [];
@@ -307,12 +309,12 @@ node #0 ~~[1]~~> node #2 with value: i
         it('should work', function() {
             clearTestVariables();
             leaves = h.leaves();
-            assert.deepEqual(leaves, [h]);
+            assert.deepEqual(leaves, []);
         });
         it('should work #2', function() {
             clearTestVariables();
             leaves = i.leaves();
-            assert.deepEqual(leaves, [i]);
+            assert.deepEqual(leaves, []);
         });
         it('should work #3', function() {
             clearTestVariables();
@@ -329,7 +331,45 @@ node #0 ~~[1]~~> node #2 with value: i
             leaves = root.leaves();
             assert.deepEqual(leaves, [d, h, i, g, c]);
         });        
-    });    
+    });
+
+    describe('allPreviousSiblingsSatisfyPredicate', function() {
+        it('should work', function() {
+            const {a, b, b1, b2, b3, b4, b5} = sampleTree4();
+            assert.isTrue (a.allPreviousSiblingsSatisfyPredicate( (x)=>true  ));
+            assert.isTrue (a.allPreviousSiblingsSatisfyPredicate( (x)=>false ));
+            assert.isFalse(a.onePrevousSiblingFailsPredicate    ( (x)=>true  ));
+            assert.isFalse(a.onePrevousSiblingFailsPredicate    ( (x)=>false ));
+
+            assert.isTrue (b.allPreviousSiblingsSatisfyPredicate( (x)=>true  ));
+            assert.isTrue (b.allPreviousSiblingsSatisfyPredicate( (x)=>false ));
+            assert.isFalse(b.onePrevousSiblingFailsPredicate    ( (x)=>true  ));
+            assert.isFalse(b.onePrevousSiblingFailsPredicate    ( (x)=>false ));
+
+            assert.isTrue (b1.allPreviousSiblingsSatisfyPredicate( (x)=>true  ));
+            assert.isTrue (b1.allPreviousSiblingsSatisfyPredicate( (x)=>false ));
+            assert.isFalse(b1.onePrevousSiblingFailsPredicate    ( (x)=>true  ));
+            assert.isFalse(b1.onePrevousSiblingFailsPredicate    ( (x)=>false ));
+
+            assert.isTrue (b2.allPreviousSiblingsSatisfyPredicate( (x)=>true  ));
+            assert.isFalse(b2.allPreviousSiblingsSatisfyPredicate( (x)=>false ));
+            assert.isFalse(b2.onePrevousSiblingFailsPredicate    ( (x)=>true  ));
+            assert.isTrue (b2.onePrevousSiblingFailsPredicate    ( (x)=>false ));
+
+            assert.isTrue (b2.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<2);} ));
+            assert.isFalse(b2.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<1);} ));
+
+            assert.isTrue (b3.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<3);} ));
+            assert.isFalse(b3.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<1);} ));            
+            assert.isFalse(b3.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<2);} ));
+
+            assert.isTrue (b4.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<4);} ));
+            assert.isFalse(b4.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<1);} ));
+            assert.isFalse(b4.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<2);} ));
+            assert.isFalse(b4.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<3);} ));
+
+        });
+    });        
 }); //  Node
 
 function sampleTree1() {
@@ -415,4 +455,39 @@ function sampleTree3(): Node<string, string> {
         h i
 
     */
+}
+
+//type EmptyObject = {||};
+/* exact object type - how awesome would that be. Alas, however
+   the above isn't working (see: https://github.com/facebook/flow/issues/2405)
+   and I have to do the following:
+*/
+                     
+
+type EmptyObject = {};
+
+type Exact<T> = T & $Shape<T>; // todo: place that in its own node package and export the type ! (upload to npmj)
+
+function sampleTree4() {
+    const a : Node<number, Exact<EmptyObject>> = new Node(-1);
+    const b : Node<number, Exact<EmptyObject>> = new Node(-1);
+    const b1: Node<number, Exact<EmptyObject>> = new Node(1);
+    const b2: Node<number, Exact<EmptyObject>> = new Node(2);
+    const b3: Node<number, Exact<EmptyObject>> = new Node(3);
+    const b4: Node<number, Exact<EmptyObject>> = new Node(4);
+    const b5: Node<number, Exact<EmptyObject>> = new Node(5);
+    a.setn({}, b);
+    b.setn({}, b1);
+    b.setn({}, b2);
+    b.setn({}, b3);
+    b.setn({}, b4);
+    b.setn({}, b5);
+
+    return {a, b, b1, b2, b3, b4, b5};
+
+    /*
+          a
+        b          
+b1 b2 b3 b4 b5
+     */
 }

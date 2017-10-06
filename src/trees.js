@@ -20,6 +20,7 @@ import {assert} from 'chai';
 export type F<V,E>  = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E, depth: number)=> void;
 export type F2<V,E> = (n: Node<V, E>, childN : ?Node<V, E>, childEdge: ?E, distanceFromStart: number, isRoot: boolean)=> void;
 type FV<V,E> = (n: Node<V, E>)=> boolean;
+type FPredicateOnNode<V, E> = (n: Node<V, E>) => boolean;
 type ValuePrinter<V> = (v: V)=>string;
 
 
@@ -49,7 +50,7 @@ class Node<V, E> {
                     rv = false;
             });
             return rv;
-        } else throw new Error('bad choreography');
+        } else throw new Error('bad choreography'); // todo: is this really useful? the mathematical way to approach this would be to return true if there are no children
     }
     /* Iteration of children during traversal is automatically done based on insertion
        order (https://stackoverflow.com/a/31159284/274677).
@@ -105,19 +106,6 @@ class Node<V, E> {
         _visit(this, null, null, 0);
     }
 
-    // TODO: I am left to implement a method that yields all the leaves of the tree (this will be necessary
-    // for when I implement the min-max algorithm) but before I do that
-    // I need to experiment with typing Generators and Iterators in flow
-
-    leaves(): Array<Node<V, E>> {
-        const rv : Array<Node<V, E>> = [];
-        this.depthFirstTraversal(function addIfLeaf(n: Node<V, E>) {
-            if (n.children===null)
-                rv.push(n);
-        }, true, false);
-        return rv;
-    }
-
     traverseAncestors(f: F2<V, E>): void {
         let distance = 0;
         let node: Node<V, E> = this;
@@ -136,9 +124,44 @@ class Node<V, E> {
         }
     }
 
+    // "previous" is understood to be according to the map's enumeration order (which is the insertion order)
+    allPreviousSiblingsSatisfyPredicate(pred: FPredicateOnNode<V, E>): boolean {
+        if (this.parent==null) {
+            assert.isTrue(this.parent===null); // re-inforcing rigor (albeit at runtime) that FlowType's nagging forced me to abandon
+            return true;
+        } else {
+            let allSatisfy = true;
+            if (this.parent.children!=null) {
+                for (let [edge, node] of this.parent.children) {
+                    (edge: E);
+                    (node: Node<V, E>);
+                    if (node===this)
+                        break;
+                    if (!pred(node)) {
+                        allSatisfy = false;
+                        break;
+                    }
+                }
+                return allSatisfy;
+            } else {
+                // re-inforcing rigor (albeit at runtime) that FlowType's nagging forced me to abandon
+                assert.isTrue(this.parent.children===null);
+                return true;
+            }
+        }
+    }
 
-    descendants(_includingThisNode: ?boolean): Array<Node<V, E>> {
-        const includingThisNode: boolean = _includingThisNode == null ? false : _includingThisNode;
+    onePrevousSiblingFailsPredicate(pred: FPredicateOnNode<V, E>): boolean {
+        return !this.allPreviousSiblingsSatisfyPredicate(pred);
+    }
+
+    // TODO: am left to implement this one
+    allAncestorsSatisfyPredicate(pred: FPredicateOnNode<V, E>): boolean {
+
+        return true;
+    }
+
+    descendants(includingThisNode: boolean = false): Array<Node<V, E>> {
         const descendants: Array<Node<V, E>> = [];
         function f(n : Node<V, E>) {
             descendants.push(n);
@@ -151,7 +174,7 @@ class Node<V, E> {
         return descendants;
     }
 
-    leafs(_includingThisNode: ?boolean): Array<Node<V,E>> {
+    leaves(_includingThisNode: ?boolean): Array<Node<V,E>> {
         const includingThisNode: boolean = _includingThisNode == null ? false : _includingThisNode;        
         const rv: Array<Node<V,E>> = [];
         function addLeavesOnly(n: Node<V, E>): void {
