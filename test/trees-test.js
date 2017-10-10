@@ -207,7 +207,7 @@ node #0 ~~[1]~~> node #2 with value: i
 
     describe('depthFirstTraversal birth edges are correct', function() {
         it('seems correct', function() {
-            let root: Node<string, string> = sampleTree3(false);
+            let root: Node<string, string> = sampleTree3(false).a;
             let edgesTraversed = '';
             const visitor: F<string, string> =  // alternate way of: https://stackoverflow.com/q/41212389/274677
             function visitor(n: Node<string, string>, parent: ?Node<string, string>, edge: ?string): void {
@@ -260,6 +260,14 @@ node #0 ~~[1]~~> node #2 with value: i
             assert.deepEqual(childEdges, []);
             assert.deepEqual(distances, [0]);
             assert.deepEqual(isRoots, [true]);
+
+            clearTestVariables();
+            root.traverseAncestors(visitor, false);
+            assert.strictEqual(ancestors, '');
+            assert.strictEqual(children , '');
+            assert.deepEqual(childEdges, []);
+            assert.deepEqual(distances, []);
+            assert.deepEqual(isRoots, []);            
         });
         it('should work #2', function() {
             clearTestVariables();
@@ -296,6 +304,14 @@ node #0 ~~[1]~~> node #2 with value: i
             assert.deepEqual(childEdges, [1,0,1,0]);
             assert.deepEqual(distances, [0,1,2,3,4]);
             assert.deepEqual(isRoots, [false, false, false, false, true]);
+
+            clearTestVariables();
+            i.traverseAncestors(visitor, false);
+            assert.strictEqual(ancestors, 'feba');
+            assert.strictEqual(children , 'ifeb');
+            assert.deepEqual(childEdges, [1,0,1,0]);
+            assert.deepEqual(distances, [1,2,3,4]);
+            assert.deepEqual(isRoots, [false, false, false, true]);            
         });
     });
 
@@ -369,7 +385,33 @@ node #0 ~~[1]~~> node #2 with value: i
             assert.isFalse(b4.allPreviousSiblingsSatisfyPredicate( (x)=>{return (x.value<3);} ));
 
         });
-    });        
+    });
+
+    describe('earliestAncestorThatDoesntSatisfyPredicate', function() {
+        it('should work', function() {
+            const {a, b, c, d, e, f, g, h, i} = sampleTree3();
+            assert.isTrue(a.earliestAncestorThatDoesntSatisfyPredicate((x)=>false, false)===null);
+            [a,b,c,d,e,f,g,h,i].forEach( (x) => {
+                assert.isTrue(x.earliestAncestorThatDoesntSatisfyPredicate((y)=>false       )===x);
+            } );
+            [b, d, e, f, g, h, i].forEach( (x) => {
+                assert.isTrue(x.earliestAncestorThatDoesntSatisfyPredicate((y:Node<string, string>)=>y.value>'b' )===b);
+            } );
+            [b, d, e, f, g, h, i].forEach( (x) => {
+                assert.isTrue(x.allAncestorsSatisfyPredicate((y:Node<string, string>)=>y.value>'b' )===false);
+            } );
+            [a,c].forEach( (x) => {
+                assert.isTrue(x.earliestAncestorThatDoesntSatisfyPredicate((y:Node<string, string>)=>y.value>'b' )===a);
+            } );
+            [a,c].forEach( (x) => {
+                assert.isTrue(x.allAncestorsSatisfyPredicate((y:Node<string, string>)=>y.value>'b' )===false);
+            } );
+            [a, b, c, d, e, f, g, h, i].forEach( (x) => {
+                assert.isTrue(x.allAncestorsSatisfyPredicate((y:Node<string, string>)=>y.value>='a' )===true);
+            } );            
+        });
+    });
+    
 }); //  Node
 
 function sampleTree1() {
@@ -428,7 +470,7 @@ function sampleTree2(withCycle: boolean) : Node<number, number>{
     return a;
 }
 
-function sampleTree3(): Node<string, string> {
+function sampleTree3(): {a: Node<string, string>, b: Node<string, string>, c: Node<string, string>, d: Node<string, string>, e: Node<string, string>, f: Node<string, string>, g: Node<string, string>, h: Node<string, string>, i: Node<string, string>} {
     const a: Node<string, string> = new Node('a');
     const b = new Node('b');
     const c = new Node('c');
@@ -446,7 +488,7 @@ function sampleTree3(): Node<string, string> {
     b.setn('e', e);
     a.setn('b', b);
     a.setn('c', c);
-    return a;
+    return {a:a, b:b, c:c, d:d, e:e, f:f, g:g, h:h, i:i};
     /*
           a
         b          c

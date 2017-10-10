@@ -106,13 +106,14 @@ class Node<V, E> {
         _visit(this, null, null, 0);
     }
 
-    traverseAncestors(f: F2<V, E>): void {
+    traverseAncestors(f: F2<V, E>, includingThisNode: boolean = true): void {
         let distance = 0;
         let node: Node<V, E> = this;
         let child: ?Node<V, E> = null;
         let edge: ?E = null;
         while (true) {
-            f(node, child, edge, distance, node.parent===null);
+            if ((node!==this) || includingThisNode)
+                f(node, child, edge, distance, node.parent===null);
             if (node.parent!=null) {
                 const savedParent: Node<V, E> = node.parent;
                 child = node;
@@ -155,12 +156,30 @@ class Node<V, E> {
         return !this.allPreviousSiblingsSatisfyPredicate(pred);
     }
 
-    // TODO: am left to implement this one
-    allAncestorsSatisfyPredicate(pred: FPredicateOnNode<V, E>): boolean {
-
-        return true;
+    allAncestorsSatisfyPredicate(pred: FPredicateOnNode<V, E>, includingThisNode: boolean = true): boolean {
+        let earliestAncestorThatDoesntSatisfyPredicate: ?Node<V, E> = this.earliestAncestorThatDoesntSatisfyPredicate(pred, includingThisNode);
+        if (earliestAncestorThatDoesntSatisfyPredicate===null)
+            return true;
+        else {
+            assert.isTrue(earliestAncestorThatDoesntSatisfyPredicate!=null);
+            return false;
+        }
     }
 
+    earliestAncestorThatDoesntSatisfyPredicate(pred: FPredicateOnNode<V, E>, includingThisNode: boolean = true): ?Node<V, E> {
+        function f(x: Node<V, E>) {
+            if (!pred(x))
+                throw x;
+        }
+        try {
+            this.traverseAncestors(f, includingThisNode);
+            return null;
+        } catch (x) {
+            assert.isTrue(x instanceof Node);
+            return x;
+        }
+    }
+    
     descendants(includingThisNode: boolean = false): Array<Node<V, E>> {
         const descendants: Array<Node<V, E>> = [];
         function f(n : Node<V, E>) {
