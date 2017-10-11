@@ -12,6 +12,8 @@ assert.isOk(Node);
 import type {F}  from '../src/trees.js';
 import type {F2} from '../src/trees.js';
 
+import type {Exact} from 'flow-common-types';
+
 
 describe('Node', function() {
 
@@ -499,16 +501,9 @@ function sampleTree3(): {a: Node<string, string>, b: Node<string, string>, c: No
     */
 }
 
-//type EmptyObject = {||};
-/* exact object type - how awesome would that be. Alas, however
-   the above isn't working (see: https://github.com/facebook/flow/issues/2405)
-   and I have to do the following:
-*/
-                     
 
 type EmptyObject = {};
 
-type Exact<T> = T & $Shape<T>; // todo: place that in its own node package and export the type ! (upload to npmj)
 
 function sampleTree4() {
     const a : Node<number, Exact<EmptyObject>> = new Node(-1);

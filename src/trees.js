@@ -17,11 +17,11 @@ if (!global._babelPolyfill) // https://github.com/s-panferov/awesome-typescript-
 import _ from 'lodash';
 import {assert} from 'chai';
 
+import type {Stringifier, Predicate} from 'flow-common-types';
+
 export type F<V,E>  = (n: Node<V, E>, parentN: ?Node<V, E>, birthEdge: ?E, depth: number)=> void;
 export type F2<V,E> = (n: Node<V, E>, childN : ?Node<V, E>, childEdge: ?E, distanceFromStart: number, isRoot: boolean)=> void;
-type FV<V,E> = (n: Node<V, E>)=> boolean;
-type FPredicateOnNode<V, E> = (n: Node<V, E>) => boolean;
-type ValuePrinter<V> = (v: V)=>string;
+
 
 
 const TREE_NODE_ID_SYMBOL_KEY: string = 'mjb44-NODE-id';
@@ -42,7 +42,7 @@ class Node<V, E> {
         this.parent = n;
     }
 
-    allChildrenSatisfy(f: FV<V,E>): boolean {
+    allChildrenSatisfy(f: Predicate<Node<V,E>>): boolean {
         let rv: boolean = true;
         if (this.children!=null) {
             this.children.forEach( (v:Node<V,E>, e:E) => {
@@ -126,7 +126,7 @@ class Node<V, E> {
     }
 
     // "previous" is understood to be according to the map's enumeration order (which is the insertion order)
-    allPreviousSiblingsSatisfyPredicate(pred: FPredicateOnNode<V, E>): boolean {
+    allPreviousSiblingsSatisfyPredicate(pred: Predicate<Node<V, E>>): boolean {
         if (this.parent==null) {
             assert.isTrue(this.parent===null); // re-inforcing rigor (albeit at runtime) that FlowType's nagging forced me to abandon
             return true;
@@ -152,11 +152,11 @@ class Node<V, E> {
         }
     }
 
-    onePrevousSiblingFailsPredicate(pred: FPredicateOnNode<V, E>): boolean {
+    onePrevousSiblingFailsPredicate(pred: Predicate<Node<V, E>>): boolean {
         return !this.allPreviousSiblingsSatisfyPredicate(pred);
     }
 
-    allAncestorsSatisfyPredicate(pred: FPredicateOnNode<V, E>, includingThisNode: boolean = true): boolean {
+    allAncestorsSatisfyPredicate(pred: Predicate<Node<V, E>>, includingThisNode: boolean = true): boolean {
         let earliestAncestorThatDoesntSatisfyPredicate: ?Node<V, E> = this.earliestAncestorThatDoesntSatisfyPredicate(pred, includingThisNode);
         if (earliestAncestorThatDoesntSatisfyPredicate===null)
             return true;
@@ -166,7 +166,7 @@ class Node<V, E> {
         }
     }
 
-    earliestAncestorThatDoesntSatisfyPredicate(pred: FPredicateOnNode<V, E>, includingThisNode: boolean = true): ?Node<V, E> {
+    earliestAncestorThatDoesntSatisfyPredicate(pred: Predicate<Node<V, E>>, includingThisNode: boolean = true): ?Node<V, E> {
         function f(x: Node<V, E>) {
             if (!pred(x))
                 throw x;
@@ -221,9 +221,7 @@ class Node<V, E> {
         } else throw new Error('bug3');
     }
 
-    print(_valuePrinter: ?ValuePrinter<V>): string {
-        const defaultValuePrinter: ValuePrinter<V> = (x: V)=>String(x);
-        let valuePrinter: ValuePrinter<V> = (_valuePrinter==null?defaultValuePrinter:_valuePrinter);
+    print(valuePrinter: Stringifier<V> =  (x: V)=>String(x)): string {
         const s: symbol = Symbol.for(TREE_NODE_ID_SYMBOL_KEY);// Symbol();
         let i: number = 0;
         const lines: Array<string> = [];
