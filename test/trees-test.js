@@ -178,7 +178,7 @@ node #0 ~~[1]~~> node #2 with value: i
 
     describe('depthFirstTraversal visits nodes in correct order', function() {
         it('seems correct', function() {
-            let {root,a,b,c,d,e,f,g,h,i,j} = sampleTree1(false);
+            let {root,a,b,c,d,e,f,g,h,i,j} = sampleTree1();
             let visited = '';
             function visitor(n: Node<string, number>) {
                 visited+=n.value;
@@ -209,7 +209,7 @@ node #0 ~~[1]~~> node #2 with value: i
 
     describe('depthFirstTraversal birth edges are correct', function() {
         it('seems correct', function() {
-            let root: Node<string, string> = sampleTree3(false).a;
+            let root: Node<string, string> = sampleTree3().a;
             let edgesTraversed = '';
             const visitor: F<string, string> =  // alternate way of: https://stackoverflow.com/q/41212389/274677
             function visitor(n: Node<string, string>, parent: ?Node<string, string>, edge: ?string): void {
