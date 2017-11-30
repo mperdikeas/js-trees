@@ -413,6 +413,18 @@ node #0 ~~[1]~~> node #2 with value: i
             } );            
         });
     });
+
+    describe('depthFromRoot', function() {
+        it('should work', function() {
+            const {a, b, c, d, e, f, g, h, i} = sampleTree3();
+            assert.strictEqual(a.depthFromRoot(), 0);
+            assert.strictEqual(b.depthFromRoot(), 1);
+            assert.strictEqual(c.depthFromRoot(), 1);
+            assert.strictEqual(d.depthFromRoot(), 2);
+            assert.strictEqual(f.depthFromRoot(), 3);
+            assert.strictEqual(h.depthFromRoot(), 4);
+        });
+    });    
     
 }); //  Node
 

@@ -249,6 +249,16 @@ class Node<V, E> {
         this.depthFirstTraversal(printerVisitor, true, true);
         return lines.join('\n');
     }
+
+    // root is at depth 0
+    depthFromRoot(): number {
+        if (this.parent==null) {
+            assert.isTrue(this.parent===null); // we should never expect to find an undefined parent, only null is allowed
+            return 0;
+        } else {
+            return 1+this.parent.depthFromRoot();
+        }
+    }
 }
 
 
